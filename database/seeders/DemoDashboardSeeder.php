@@ -19,8 +19,21 @@ class DemoDashboardSeeder extends Seeder
 {
     public function run(): void
     {
+        if (Report::withTrashed()->exists()) {
+            $this->command?->warn('Reports already exist - demo seeding skipped.');
+
+            return;
+        }
+
         $admin = User::where('role', 'admin')->first()
             ?? User::create(['name' => 'Demo Admin', 'email' => 'demo.admin@invalid.local', 'role' => 'admin']);
+
+        // Demo reporters (cannot sign in: not on the MCC domain / tenant)
+        $reporters = collect(['Elena Reyes', 'Paolo Garcia', 'Nina Flores', 'Luis Mendoza', 'Carla Lim', 'Ana Cruz', 'Mark Villanueva', 'Bea Ramos', 'Jose Tan', 'Mia Torres'])
+            ->map(fn ($name) => User::firstOrCreate(
+                ['email' => strtolower(str_replace(' ', '.', $name)) . '@demo.invalid'],
+                ['name' => $name, 'role' => 'user']
+            ));
 
         $categories = collect(['Furniture', 'Electrical Facilities', 'Computer Equipment', 'Plumbing', 'Laboratory Equipment'])
             ->map(fn ($n) => Category::firstOrCreate(['name' => $n]));
@@ -59,7 +72,7 @@ class DemoDashboardSeeder extends Seeder
 
             $report = Report::create([
                 'reference_no' => sprintf('AW-%d-%03d', now()->year, $i + 1),
-                'reporter_id'  => $admin->id,
+                'reporter_id'  => $reporters->random()->id,
                 'category_id'  => $categories->random()->id,
                 'location_id'  => $locations->random()->id,
                 'title'        => $titles[array_rand($titles)],

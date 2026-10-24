@@ -31,8 +31,12 @@
         <ul class="flex flex-col gap-[5px]">
             @foreach ($nav as [$label, $icon, $route])
                 @php
-                    $pattern = $route === 'admin.dashboard' ? $route : Str::beforeLast($route, '.') . '.*';
-                    $active = request()->routeIs($pattern);
+                    $patterns = match (true) {
+                        $route === 'admin.dashboard'  => [$route],
+                        substr_count($route, '.') > 1 => [Str::beforeLast($route, '.') . '.*'],
+                        default                       => [$route, $route . '.*'],
+                    };
+                    $active = request()->routeIs(...$patterns);
                 @endphp
                 <li>
                     <a href="{{ Route::has($route) ? route($route) : '#' }}"

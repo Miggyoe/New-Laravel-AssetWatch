@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\MicrosoftController;
+use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -14,6 +16,8 @@ Route::view('/unauthorized', 'auth.login', ['unauthorized' => true])->name('unau
 
 Route::middleware('auth')->group(function () {
     Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
+    Route::get('reports',        [ReportController::class, 'index'])->name('admin.reports.index');
 
     Route::post('/logout', function () {
         auth()->logout();
