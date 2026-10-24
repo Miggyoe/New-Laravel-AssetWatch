@@ -1,7 +1,4 @@
-@php
-    $user = auth()->user();
-    $displayName = $user?->name ?? 'Guest';
-@endphp
+@php $user = auth()->user(); @endphp
 
 <header class="flex h-[72px] items-center justify-between gap-4 border-b border-line bg-white px-4 sm:px-7">
     <div class="flex items-center gap-3">
@@ -32,6 +29,6 @@
             <span class="absolute -right-0.5 -top-0.5 size-1.5 rounded-full bg-red-600"></span>
         </button>
 
-        <p class="text-xs font-medium text-ink">{{ $displayName }} <span class="text-[10px]">▾</span></p>
+        <p class="text-xs font-medium text-ink">{{ $user->name }} <span class="text-[10px]">▾</span></p>
     </div>
 </header>

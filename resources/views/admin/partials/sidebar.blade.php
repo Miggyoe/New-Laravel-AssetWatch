@@ -15,11 +15,7 @@
     ];
 
     $user = auth()->user();
-    $userName = $user?->name ?? 'Guest';
-    $userRole = $user?->role ?? 'admin';
-    $initials = $user
-        ? Str::of($userName)->explode(' ')->filter()->map(fn ($w) => Str::upper(Str::substr($w, 0, 1)))->take(2)->implode('')
-        : 'G';
+    $initials = Str::of($user->name)->explode(' ')->filter()->map(fn ($w) => Str::upper(Str::substr($w, 0, 1)))->take(2)->implode('');
 @endphp
 
 <aside id="sidebar"
@@ -27,15 +23,7 @@
               max-lg:hidden max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:z-40
               lg:sticky lg:top-0 lg:h-screen">
     {{-- Brand --}}
-    <div class="flex items-center gap-[11px]">
-        <div class="flex h-[38px] w-9 items-center justify-center rounded-lg bg-white text-navy">
-            <x-icon name="shield-check" :size="25" />
-        </div>
-        <div class="leading-[1.3] text-white">
-            <p class="text-base font-bold">MCC AssetWatch</p>
-            <p class="text-[9px] font-normal text-navy-text">CAMPUS FACILITIES PORTAL</p>
-        </div>
-    </div>
+    <x-brand />
 
     {{-- Navigation --}}
     <nav class="flex flex-col gap-2 overflow-y-auto">
@@ -76,14 +64,14 @@
         <div class="h-px bg-navy-line"></div>
 
         <div class="flex items-center gap-2.5">
-            @if ($user && $user->avatar)
+            @if ($user->avatar)
                 <img src="{{ $user->avatar }}" alt="" class="size-8 rounded-full object-cover">
             @else
                 <div class="flex size-8 items-center justify-center rounded-full bg-navy-line text-[11px] font-semibold text-white">{{ $initials }}</div>
             @endif
             <div class="min-w-0 leading-normal">
-                <p class="truncate text-xs font-semibold text-white">{{ $userName }}</p>
-                <p class="text-[10px] text-navy-text">{{ ucfirst($userRole === 'admin' ? 'Administrator' : $userRole) }}</p>
+                <p class="truncate text-xs font-semibold text-white">{{ $user->name }}</p>
+                <p class="text-[10px] text-navy-text">{{ ucfirst($user->role === 'admin' ? 'Administrator' : $user->role) }}</p>
             </div>
         </div>
     </div>
