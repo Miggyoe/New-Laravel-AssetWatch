@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+/* Design tokens taken from the Figma "Dashboard / Campus overview" frame */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-navy: #17365d;        /* sidebar */
+  --color-navy-line: #21456f;   /* sidebar divider / hover */
+  --color-navy-text: #c4d2e3;
+  --color-navy-label: #91a8c4;
+
+  --color-brand: #2563eb;       /* primary blue */
+  --color-teal: #0f9d8a;        /* "resolved" series / success accents */
+  --color-canvas: #f5f7fb;      /* page background */
+  --color-ink: #172033;         /* primary text */
+  --color-muted: #64748b;       /* secondary text */
+  --color-line: #e2e8f0;        /* borders */
+}
