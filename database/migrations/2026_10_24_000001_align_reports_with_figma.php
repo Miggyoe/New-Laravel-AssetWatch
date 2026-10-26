@@ -1,24 +1,31 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
- * The Figma flow is Pending -> Verified -> In Progress -> Resolved (or Rejected) with
- * Low / Medium / High priority. Run this only if you already migrated the first schema.
+ * Figma flow: Pending -> Verified -> In Progress -> Resolved / Rejected, priorities Low / Medium / High.
+ * Works on MySQL and SQLite (Laravel 11+ rebuilds the table on SQLite for ->change()).
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE reports MODIFY status ENUM('pending','verified','in_progress','resolved','rejected') NOT NULL DEFAULT 'pending'");
-        DB::statement("UPDATE reports SET priority = 'high' WHERE priority = 'critical'");
-        DB::statement("ALTER TABLE reports MODIFY priority ENUM('low','medium','high') NOT NULL DEFAULT 'medium'");
+        DB::table('reports')->where('priority', 'critical')->update(['priority' => 'high']);
+
+        Schema::table('reports', function (Blueprint $table) {
+            $table->enum('status', ['pending', 'verified', 'in_progress', 'resolved', 'rejected'])->default('pending')->change();
+            $table->enum('priority', ['low', 'medium', 'high'])->default('medium')->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE reports MODIFY status ENUM('pending','in_progress','resolved','rejected') NOT NULL DEFAULT 'pending'");
-        DB::statement("ALTER TABLE reports MODIFY priority ENUM('low','medium','high','critical') NOT NULL DEFAULT 'medium'");
+        Schema::table('reports', function (Blueprint $table) {
+            $table->enum('status', ['pending', 'in_progress', 'resolved', 'rejected'])->default('pending')->change();
+            $table->enum('priority', ['low', 'medium', 'high', 'critical'])->default('medium')->change();
+        });
     }
 };

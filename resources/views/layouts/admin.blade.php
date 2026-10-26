@@ -15,6 +15,13 @@
             @include('admin.partials.topbar')
 
             <main class="flex flex-col gap-[18px] p-4 sm:p-6">
+                @if (session('status'))
+                    <div role="status" class="flex items-center gap-2.5 rounded-md bg-[#e8f7f3] p-3 text-[#0f9d8a]">
+                        <x-icon name="circle-check" :size="16" />
+                        <p class="text-xs font-semibold">{{ session('status') }}</p>
+                    </div>
+                @endif
+
                 @yield('content')
             </main>
         </div>

@@ -9,6 +9,8 @@ use App\Models\Report;
 use App\Models\ReportUpdate;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * Demo data with the same status split as the Figma dashboard (248 reports:
@@ -26,14 +28,16 @@ class DemoDashboardSeeder extends Seeder
         }
 
         $admin = User::where('role', 'admin')->first()
-            ?? User::create(['name' => 'Demo Admin', 'email' => 'demo.admin@invalid.local', 'role' => 'admin']);
+            ?? User::forceCreate(['name' => 'Demo Admin', 'email' => 'demo.admin@invalid.local', 'role' => 'admin', 'password' => Hash::make(Str::random(40))]);
 
         // Demo reporters (cannot sign in: not on the MCC domain / tenant)
         $reporters = collect(['Elena Reyes', 'Paolo Garcia', 'Nina Flores', 'Luis Mendoza', 'Carla Lim', 'Ana Cruz', 'Mark Villanueva', 'Bea Ramos', 'Jose Tan', 'Mia Torres'])
-            ->map(fn ($name) => User::firstOrCreate(
-                ['email' => strtolower(str_replace(' ', '.', $name)) . '@demo.invalid'],
-                ['name' => $name, 'role' => 'user']
-            ));
+            ->map(function ($name) {
+                $email = strtolower(str_replace(' ', '.', $name)) . '@demo.invalid';
+
+                return User::where('email', $email)->first()
+                    ?? User::forceCreate(['name' => $name, 'email' => $email, 'role' => 'user', 'password' => Hash::make(Str::random(40))]);
+            });
 
         $categories = collect(['Furniture', 'Electrical Facilities', 'Computer Equipment', 'Plumbing', 'Laboratory Equipment'])
             ->map(fn ($n) => Category::firstOrCreate(['name' => $n]));
