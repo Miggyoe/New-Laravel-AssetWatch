@@ -7,6 +7,7 @@
         ['Incident Reports',      'clipboard-list',         'admin.reports.index'],
         ['Work Orders',           'wrench',                 'admin.work-orders.index'],
         ['Maintenance Personnel', 'users',                  'admin.personnel.index'],
+        ['User Management',       'user-cog',               'admin.users.index'],
         ['Campus Locations',      'map-pin',                'admin.locations.index'],
         ['Asset Categories',      'layers',                 'admin.categories.index'],
         ['Analytics and Reports', 'chart-no-axes-combined', 'admin.analytics'],

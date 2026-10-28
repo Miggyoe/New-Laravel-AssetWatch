@@ -22,6 +22,13 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div role="alert" class="flex items-center gap-2.5 rounded-md bg-[#fef2f2] p-3 text-[#b91c1c]">
+                        <x-icon name="circle-alert" :size="16" />
+                        <p class="text-xs font-semibold">{{ session('error') }}</p>
+                    </div>
+                @endif
+
                 @yield('content')
             </main>
         </div>
