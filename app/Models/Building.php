@@ -10,6 +10,11 @@ class Building extends Model
 {
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return ['is_active' => 'boolean'];
+    }
+
     public function locations() { return $this->hasMany(Location::class); }
 
     /** "Academic Bldg" -> "Academic" (used in compact location labels such as "Academic · 203"). */

@@ -8,5 +8,10 @@ class Category extends Model
 {
     protected $guarded = [];
 
+    protected function casts(): array
+    {
+        return ['is_active' => 'boolean'];
+    }
+
     public function reports() { return $this->hasMany(Report::class); }
 }

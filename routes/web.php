@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\LocationController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\PersonnelController;
 use App\Http\Controllers\Admin\ReportController;
@@ -65,4 +68,20 @@ Route::middleware(['auth', 'mcc.org', 'admin'])->prefix('admin')->name('admin.')
     Route::post('users',               [UserController::class, 'store'])->name('users.store');
     Route::patch('users/{user}',       [UserController::class, 'update'])->name('users.update');
     Route::post('users/{user}/toggle', [UserController::class, 'toggle'])->name('users.toggle');
+
+    // Locations
+    Route::get('locations',                  [LocationController::class, 'index'])->name('locations.index');
+    Route::post('locations',                 [LocationController::class, 'store'])->name('locations.store');
+    Route::patch('locations/{building}',     [LocationController::class, 'update'])->name('locations.update');
+    Route::post('locations/{building}/toggle', [LocationController::class, 'toggle'])->name('locations.toggle');
+
+    // Categories
+    Route::get('categories',                    [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('categories',                   [CategoryController::class, 'store'])->name('categories.store');
+    Route::patch('categories/{category}',       [CategoryController::class, 'update'])->name('categories.update');
+    Route::post('categories/{category}/toggle', [CategoryController::class, 'toggle'])->name('categories.toggle');
+
+    // Analytics
+    Route::get('analytics',        [AnalyticsController::class, 'index'])->name('analytics');
+    Route::get('analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
 });
