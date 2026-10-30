@@ -129,7 +129,7 @@ class ReportDetailController extends Controller
                 'remarks'     => 'Verified by administrator.',
             ]);
 
-            ActivityLog::record('report.verified', "Verified report {$report->reference_no}", $report);
+            ActivityLog::record('report.verified', "Verified report {$report->reference_no}", $report, ReportStatus::Pending->value, ReportStatus::Verified->value);
         });
 
         return back()->with('status', "{$report->reference_no} verified. The original report is now locked.");
@@ -157,7 +157,7 @@ class ReportDetailController extends Controller
                 'remarks'     => $data['rejection_reason'] . ': ' . $data['rejection_explanation'],
             ]);
 
-            ActivityLog::record('report.rejected', "Rejected report {$report->reference_no} ({$data['rejection_reason']})", $report);
+            ActivityLog::record('report.rejected', "Rejected report {$report->reference_no} ({$data['rejection_reason']})", $report, ReportStatus::Pending->value, ReportStatus::Rejected->value);
         });
 
         return back()->with('status', "{$report->reference_no} rejected. The reason was recorded in the audit log.");
@@ -236,7 +236,7 @@ class ReportDetailController extends Controller
                     });
             }
 
-            ActivityLog::record('report.status_changed', "Changed {$report->reference_no} from {$from->label()} to {$next->label()}", $report);
+            ActivityLog::record('report.status_changed', "Changed {$report->reference_no} from {$from->label()} to {$next->label()}", $report, $from->value, $next->value);
         });
 
         return back()->with('status', "{$report->reference_no} is now {$next->label()}.");

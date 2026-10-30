@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\LocationController;
@@ -84,4 +85,8 @@ Route::middleware(['auth', 'mcc.org', 'admin'])->prefix('admin')->name('admin.')
     // Analytics
     Route::get('analytics',        [AnalyticsController::class, 'index'])->name('analytics');
     Route::get('analytics/export', [AnalyticsController::class, 'export'])->name('analytics.export');
+
+    // Activity logs
+    Route::get('activity-logs',        [ActivityLogController::class, 'index'])->name('activity-logs');
+    Route::get('activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
 });

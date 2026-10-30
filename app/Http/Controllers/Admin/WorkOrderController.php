@@ -143,7 +143,7 @@ class WorkOrderController extends Controller
                 'to_status'   => ReportStatus::InProgress->value,
             ]);
 
-            ActivityLog::record('work_order.created', "Created work order {$order->reference_no} for {$report->reference_no}", $order);
+            ActivityLog::record('work_order.created', "Created work order {$order->reference_no} for {$report->reference_no}", $order, null, WorkOrderStatus::Assigned->value);
 
             return $order;
         });
@@ -173,8 +173,9 @@ class WorkOrderController extends Controller
         ], ['technician_id.not_in' => 'Choose a different technician.']);
 
         DB::transaction(function () use ($workOrder, $data) {
-            $from = $workOrder->technician;
-            $to   = Technician::findOrFail($data['technician_id']);
+            $from   = $workOrder->technician;
+            $to     = Technician::findOrFail($data['technician_id']);
+            $before = $workOrder->status->value;
 
             $attributes = ['technician_id' => $to->id];
             if ($workOrder->status->isOpen()) {
@@ -190,7 +191,7 @@ class WorkOrderController extends Controller
                 'note'          => "Reassigned from {$from->name} to {$to->name}.",
             ]);
 
-            ActivityLog::record('work_order.reassigned', "Reassigned {$workOrder->reference_no} from {$from->name} to {$to->name}", $workOrder);
+            ActivityLog::record('work_order.reassigned', "Reassigned {$workOrder->reference_no} from {$from->name} to {$to->name}", $workOrder, $before, $workOrder->status->value);
         });
 
         return redirect()->route('admin.work-orders.show', $workOrder)->with('status', 'Technician reassigned.');
