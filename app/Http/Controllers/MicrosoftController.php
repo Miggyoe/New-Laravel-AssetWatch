@@ -59,7 +59,10 @@ class MicrosoftController extends Controller
             $user->role     = 'user';
         }
 
-        $user->name = $azureUser->getName() ?: ($user->name ?: Str::before($email, '@'));
+        // Only take the name from Microsoft the first time, so a name edited in Settings is kept
+        if (! $user->exists || blank($user->name)) {
+            $user->name = $azureUser->getName() ?: Str::before($email, '@');
+        }
 
         $isAdminEmail = in_array($email, config('mcc.admin_emails'), true);
         $existingAdmin = $user->exists && $user->role === 'admin';

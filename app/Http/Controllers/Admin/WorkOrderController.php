@@ -86,6 +86,7 @@ class WorkOrderController extends Controller
             'hasAssignable' => $assignable->isNotEmpty(),
             'openCreate'    => $request->filled('report') || (old('_form') === 'create' && session()->has('errors')),
             'preselectedReport' => $request->query('report'),
+            'defaultTarget'     => \App\Models\Setting::defaultTargetDate()->toDateString(),
         ]);
     }
 

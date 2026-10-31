@@ -154,7 +154,7 @@
             </div>
 
             <div class="flex flex-col gap-4 sm:flex-row">
-                <x-input name="target_date" type="date" label="Target completion date" required :min="now()->toDateString()" width="w-full sm:w-[206px]" />
+                <x-input name="target_date" type="date" label="Target completion date" required :min="now()->toDateString()" :value="$defaultTarget" width="w-full sm:w-[206px]" />
                 <x-input name="notes" label="Additional notes" maxlength="500" placeholder="Optional" width="w-full sm:flex-1" />
             </div>
 

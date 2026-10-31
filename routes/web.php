@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -89,4 +91,11 @@ Route::middleware(['auth', 'mcc.org', 'admin'])->prefix('admin')->name('admin.')
     // Activity logs
     Route::get('activity-logs',        [ActivityLogController::class, 'index'])->name('activity-logs');
     Route::get('activity-logs/export', [ActivityLogController::class, 'export'])->name('activity-logs.export');
+
+    // Settings
+    Route::get('settings', [SettingsController::class, 'index'])->name('settings');
+    Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Notifications
+    Route::post('notifications/read', [NotificationController::class, 'read'])->name('notifications.read');
 });

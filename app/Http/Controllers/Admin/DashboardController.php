@@ -6,6 +6,7 @@ use App\Enums\ReportStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Report;
 use App\Models\ReportUpdate;
+use App\Models\Technician;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -39,8 +40,9 @@ class DashboardController extends Controller
             'trend'    => $this->trend($range),
             'donut'    => $this->donut($counts, $total),
             'total'    => $total,
-            'recent'   => Report::with(['category', 'location.building'])->latest()->limit(5)->get(),
+            'recent'   => Report::with(['category', 'location.building'])->latest()->limit(10)->get(), // ten rows keep this card as tall as the two cards beside it
             'activity' => ReportUpdate::with(['report', 'user'])->latest()->limit(4)->get(),
+            'workload' => $this->workload(),
         ]);
     }
 
@@ -114,5 +116,20 @@ class DashboardController extends Controller
         }
 
         return ['circumference' => round($circumference, 2), 'segments' => $segments];
+    }
+
+    /** Open work orders per active technician, busiest first, to spot bottlenecks early. */
+    private function workload(): array
+    {
+        $threshold = (int) config('mcc.busy_threshold', 7);
+
+        $all = Technician::query()->where('is_active', true)->withActiveOrders()->get();
+
+        return [
+            'threshold'  => $threshold,
+            'rows'       => $all->sortBy([['active_orders_count', 'desc'], ['name', 'asc']])->take(6)->values(),
+            'atCapacity' => $all->where('is_available', true)->filter(fn ($t) => $t->active_orders_count >= $threshold)->count(),
+            'total'      => $all->count(),
+        ];
     }
 }

@@ -7,6 +7,17 @@
     @php
         $hour = now()->hour;
         $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+
+        // "ETHAN MIGUEL PATIO" -> "Ethan Miguel" (everything except the last word; one-word names stay whole)
+        $nameParts = preg_split('/\s+/', trim((string) auth()->user()->name)) ?: [];
+        if (count($nameParts) > 1) {
+            array_pop($nameParts);
+        }
+        $adminName = implode(' ', $nameParts);
+        if ($adminName === mb_strtoupper($adminName)) {
+            $adminName = \Illuminate\Support\Str::title(mb_strtolower($adminName));
+        }
+        $adminName = $adminName ?: 'Administrator';
         $reportsUrl = Route::has('admin.reports.index') ? route('admin.reports.index') : '#';
         $logUrl = Route::has('admin.activity-logs') ? route('admin.activity-logs') : '#';
     @endphp
@@ -14,7 +25,7 @@
     {{-- Page heading --}}
     <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-col gap-[5px]">
-            <h1 class="text-[26px] font-semibold leading-[1.45]">{{ $greeting }}, Administrator</h1>
+            <h1 class="text-[26px] font-semibold leading-[1.45]">{{ $greeting }}, {{ $adminName }}</h1>
             <p class="text-xs text-muted">Monitor campus facility reports and maintenance activities in one place.</p>
         </div>
         <div class="flex items-center gap-2.5">
@@ -118,14 +129,14 @@
 
     {{-- Recent reports + activity --}}
     <div class="grid grid-cols-1 gap-[18px] xl:grid-cols-[844fr_298fr]">
-        <section class="min-w-0 rounded-[10px] border border-line bg-white shadow-[0_2px_3px_rgba(23,54,93,0.02)]">
+        <section class="flex min-w-0 flex-col rounded-[10px] border border-line bg-white shadow-[0_2px_3px_rgba(23,54,93,0.02)]">
             <div class="flex items-start justify-between px-[18px] pb-3.5 pt-4">
                 <h2 class="text-[15px] font-semibold leading-[1.45]">Recent incident reports</h2>
                 <a href="{{ $reportsUrl }}" class="text-[11px] font-medium text-brand hover:underline">View all reports →</a>
             </div>
 
-            <div class="overflow-x-auto">
-                <table class="w-full min-w-[760px] text-left">
+            <div class="flex-1 overflow-x-auto">
+                <table class="h-full w-full min-w-[760px] text-left">
                     <thead>
                         <tr class="h-[43px] bg-canvas text-[10px] font-semibold text-muted">
                             <th class="pl-4 pr-2 font-semibold">Report ID</th>
@@ -166,6 +177,7 @@
             </div>
         </section>
 
+        <div class="flex min-w-0 flex-col gap-[18px]">
         <section class="flex min-w-0 flex-col gap-3.5 rounded-[10px] border border-line bg-white p-[18px] shadow-[0_2px_3px_rgba(23,54,93,0.02)]">
             <h2 class="text-[15px] font-semibold leading-[1.45]">Maintenance activity</h2>
 
@@ -185,5 +197,50 @@
 
             <a href="{{ $logUrl }}" class="text-[11px] font-medium text-brand hover:underline">View activity log →</a>
         </section>
+
+        {{-- Technician workload: open work orders per person --}}
+        <section class="flex min-w-0 flex-col gap-3.5 rounded-[10px] border border-line bg-white p-[18px] shadow-[0_2px_3px_rgba(23,54,93,0.02)]">
+            <div class="flex items-start justify-between gap-2">
+                <div class="leading-[1.45]">
+                    <h2 class="text-[15px] font-semibold">Technician workload</h2>
+                    <p class="text-[10px] text-muted">Open work orders per technician</p>
+                </div>
+                @if ($workload['atCapacity'] > 0)
+                    <span class="shrink-0 rounded-full bg-[#fff7e0] px-2 py-1 text-[10px] font-semibold text-[#a16207]">{{ $workload['atCapacity'] }} at capacity</span>
+                @endif
+            </div>
+
+            <ul class="flex flex-col gap-3">
+                @forelse ($workload['rows'] as $tech)
+                    @php
+                        $open  = (int) $tech->active_orders_count;
+                        $limit = max(1, $workload['threshold']);
+                        $width = $open === 0 ? 0 : max(6, min(100, (int) round($open / $limit * 100)));
+                        $bar   = ! $tech->is_available ? 'bg-slate-300' : ($open >= $limit ? 'bg-[#b91c1c]' : ($open >= $limit * 0.7 ? 'bg-[#a16207]' : 'bg-teal'));
+                        $profile = Route::has('admin.personnel.show') ? route('admin.personnel.show', $tech) : '#';
+                    @endphp
+                    <li class="flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between gap-2 text-[11px]">
+                            <a href="{{ $profile }}" class="min-w-0 truncate hover:text-brand">
+                                {{ $tech->name }} <span class="text-muted">· {{ $tech->specialty }}</span>
+                            </a>
+                            <span class="shrink-0 font-semibold">
+                                @unless ($tech->is_available) <span class="mr-1 font-normal text-muted">Unavailable ·</span> @endunless
+                                {{ $open }} active {{ \Illuminate\Support\Str::plural('task', $open) }}
+                            </span>
+                        </div>
+                        <div class="h-[5px] rounded-full bg-[#e2e8f0]"><div class="h-full rounded-full {{ $bar }}" style="width: {{ $width }}%"></div></div>
+                    </li>
+                @empty
+                    <li class="text-[11px] text-muted">No active maintenance personnel yet.</li>
+                @endforelse
+            </ul>
+
+            <div class="flex items-center justify-between text-[11px]">
+                <a href="{{ Route::has('admin.personnel.index') ? route('admin.personnel.index') : '#' }}" class="font-medium text-brand hover:underline">View all personnel →</a>
+                <span class="text-[10px] text-muted">Capacity: {{ $workload['threshold'] }} open orders</span>
+            </div>
+        </section>
+        </div>
     </div>
 @endsection
