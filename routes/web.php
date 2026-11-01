@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AvatarController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ActivityLogController;
@@ -98,4 +99,7 @@ Route::middleware(['auth', 'mcc.org', 'admin'])->prefix('admin')->name('admin.')
 
     // Notifications
     Route::post('notifications/read', [NotificationController::class, 'read'])->name('notifications.read');
+
+    // Avatars
+    Route::get('avatars/{user}', [AvatarController::class, 'show'])->name('avatars.show');
 });

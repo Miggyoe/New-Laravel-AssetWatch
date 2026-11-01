@@ -69,11 +69,7 @@
         <div class="h-px bg-navy-line"></div>
 
         <div class="flex items-center gap-2.5">
-            @if ($user->avatar)
-                <img src="{{ $user->avatar }}" alt="" class="size-8 rounded-full object-cover">
-            @else
-                <div class="flex size-8 items-center justify-center rounded-full bg-navy-line text-[11px] font-semibold text-white">{{ $initials }}</div>
-            @endif
+            <x-avatar :user="$user" :size="32" />
             <div class="min-w-0 leading-normal">
                 <p class="truncate text-xs font-semibold text-white">{{ $user->name }}</p>
                 <p class="text-[10px] text-navy-text">{{ ucfirst($user->role === 'admin' ? 'Administrator' : $user->role) }}</p>

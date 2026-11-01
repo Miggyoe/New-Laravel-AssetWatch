@@ -65,11 +65,7 @@
                             <tr class="h-[52px] border-b border-line last:border-b-0 hover:bg-canvas/60">
                                 <td class="pl-4 pr-2">
                                     <div class="flex items-center gap-2.5">
-                                        @if ($person->avatar)
-                                            <img src="{{ $person->avatar }}" alt="" class="size-8 shrink-0 rounded-full object-cover">
-                                        @else
-                                            <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#e8f0fb] text-[11px] font-semibold text-navy">{{ mb_strtoupper(mb_substr($person->name, 0, 1)) }}</span>
-                                        @endif
+                                        <x-avatar :user="$person" :size="32" />
                                         <span class="min-w-0 truncate font-medium">{{ $person->name }}@if ($isSelf) <span class="font-normal text-muted">(you)</span>@endif</span>
                                     </div>
                                 </td>

@@ -6,6 +6,8 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -75,7 +77,6 @@ class MicrosoftController extends Controller
         $optional = [
             'microsoft_id'  => $azureUser->getId(),
             'tenant_id'     => $tid,
-            'avatar'        => $azureUser->getAvatar(),
             'last_login_at' => now(),
         ];
         foreach ($optional as $column => $value) {
@@ -89,6 +90,8 @@ class MicrosoftController extends Controller
         }
 
         $user->save();
+
+        $this->syncPhoto($user, $azureUser->token ?? null);
 
         Auth::login($user);
         $request->session()->regenerate();
@@ -119,5 +122,34 @@ class MicrosoftController extends Controller
         $decoded = json_decode(base64_decode(strtr($payload, '-_', '+/'), true), true);
 
         return is_array($decoded) ? ($decoded['tid'] ?? null) : null;
+    }
+
+    /**
+     * Downloads the Microsoft profile photo (Graph "me/photo", covered by the User.Read permission you already grant)
+     * and keeps it on the server. Refreshed at most once a day; people without a photo keep their initial.
+     */
+    private function syncPhoto(User $user, ?string $token): void
+    {
+        if (! $token || ! Schema::hasColumn('users', 'avatar')) {
+            return;
+        }
+
+        $disk = Storage::disk('local');
+        $path = "avatars/{$user->id}.jpg";
+
+        if ($user->avatar === $path && $disk->exists($path) && $disk->lastModified($path) > now()->subDay()->timestamp) {
+            return;
+        }
+
+        try {
+            $response = Http::withToken($token)->timeout(4)->get('https://graph.microsoft.com/v1.0/me/photo/$value');
+
+            if ($response->successful() && str_starts_with((string) $response->header('Content-Type'), 'image/') && strlen($response->body()) <= 1_500_000) {
+                $disk->put($path, $response->body());
+                $user->forceFill(['avatar' => $path])->save();
+            }
+        } catch (\Throwable $e) {
+            report($e); // never block a sign-in because of a photo
+        }
     }
 }

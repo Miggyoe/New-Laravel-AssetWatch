@@ -33,7 +33,10 @@
             @endif
         </button>
 
-        <p class="text-xs font-medium text-ink">{{ $user->name }} <span class="text-[10px]">▾</span></p>
+        <div class="flex items-center gap-2.5">
+            <x-avatar :user="$user" :size="28" />
+            <p class="hidden text-xs font-medium text-ink sm:block">{{ $user->name }} <span class="text-[10px]">▾</span></p>
+        </div>
     </div>
 
     {{-- Notifications panel (Figma: "Notifications panel") --}}
