@@ -24,7 +24,6 @@ return new class extends Migration
         if (! Schema::hasTable('buildings')) {
             Schema::create('buildings', function (Blueprint $table) {
                 $table->id();
-                $table->string('code')->unique();
                 $table->string('name');
                 $table->timestamps();
             });
@@ -34,9 +33,13 @@ return new class extends Migration
             Schema::create('locations', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('building_id')->constrained()->cascadeOnDelete();
+                $table->string('code', 40)->nullable();
                 $table->string('name');
+                $table->string('floor', 80)->nullable();
+                $table->string('type', 30)->nullable();
+                $table->string('notes', 200)->nullable();
                 $table->timestamps();
-                $table->unique(['building_id', 'name']);
+                $table->unique(['building_id', 'name', 'code']);
             });
         }
 

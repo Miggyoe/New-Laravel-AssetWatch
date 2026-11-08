@@ -151,7 +151,7 @@
 
             <div class="flex flex-col gap-4 sm:flex-row sm:gap-6">
                 <x-detail label="Institutional email" :value="$profile->email ?: '—'" />
-                <x-detail label="Phone / Extension" :value="trim(($profile->phone ?: '—') . ($profile->extension ? ' · Ext. ' . $profile->extension : ''))" />
+                <x-detail label="Phone" :value="$profile->phone ?: '—'" />
             </div>
 
             <div class="grid grid-cols-3 gap-3">
@@ -169,7 +169,7 @@
                     <div class="flex items-center justify-between gap-3 border-b border-line pb-2.5 text-[11px] last:border-b-0">
                         <div class="min-w-0">
                             <a href="{{ route('admin.work-orders.show', $order) }}" class="font-medium text-brand hover:underline">{{ $order->reference_no }}</a>
-                            <span class="text-muted"> · {{ $order->title }} · {{ trim(($order->report?->location?->building?->short_name ?? '') . ' ' . ($order->report?->location?->name ?? '')) }}</span>
+                            <span class="text-muted"> · {{ $order->title }} · {{ $order->report?->locationShort() }}</span>
                         </div>
                         <x-status-badge :status="$order->status" />
                     </div>

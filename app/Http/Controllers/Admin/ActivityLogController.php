@@ -96,7 +96,7 @@ class ActivityLogController extends Controller
             $subject instanceof WorkOrder  => [$subject->reference_no, $link('admin.work-orders.show', $subject)],
             $subject instanceof Technician => [$subject->staff_id, $link('admin.personnel.show', $subject)],
             $subject instanceof User       => [$subject->email, $link('admin.users.index')],
-            $subject instanceof Building   => [$subject->code, $link('admin.locations.index')],
+            $subject instanceof Building   => [$subject->name, $link('admin.locations.show', $subject) ?? $link('admin.locations.index')],
             $subject instanceof Category   => [$subject->name, $link('admin.categories.index')],
             default                        => [class_basename($subject) . ' #' . $subject->getKey(), null],
         };

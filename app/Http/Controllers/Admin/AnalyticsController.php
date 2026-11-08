@@ -98,7 +98,7 @@ class AnalyticsController extends Controller
                             $r->reference_no,
                             $r->title,
                             $r->location?->building?->name,
-                            $r->location?->name,
+                            $r->location?->fullLabel(),
                             $r->category?->name,
                             $r->priority->label(),
                             $r->status->label(),

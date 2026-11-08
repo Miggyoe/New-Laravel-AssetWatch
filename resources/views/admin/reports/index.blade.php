@@ -58,19 +58,15 @@
 
         {{-- Table --}}
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[1060px] table-fixed text-left">
+            <table class="w-full min-w-[1016px] table-fixed text-left">
                 <colgroup>
-                    <col class="w-[44px]"><col class="w-[112px]"><col><col class="w-[120px]"><col class="w-[136px]">
+                    <col class="w-[112px]"><col><col class="w-[120px]"><col class="w-[136px]">
                     <col class="w-[116px]"><col class="w-[100px]"><col class="w-[84px]"><col class="w-[108px]"><col class="w-[96px]">
                 </colgroup>
                 <thead>
                     <tr class="h-[43px] bg-canvas text-[10px] font-semibold text-muted">
-                        <th class="pl-4">
-                            <input type="checkbox" aria-label="Select all reports" class="size-3.5 accent-brand"
-                                   onclick="document.querySelectorAll('[data-row-check]').forEach(c => c.checked = this.checked)">
-                        </th>
-                        @foreach ($heads as $head)
-                            <th class="px-2 font-semibold">{{ $head }}</th>
+                        @foreach ($heads as $i => $head)
+                            <th class="{{ $i === 0 ? 'pl-4 pr-2' : 'px-2' }} font-semibold">{{ $head }}</th>
                         @endforeach
                     </tr>
                 </thead>
@@ -80,8 +76,7 @@
                         @foreach ($reports as $report)
                             @php $showUrl = Route::has('admin.reports.show') ? route('admin.reports.show', $report) : '#'; @endphp
                             <tr class="h-10 border-b border-line last:border-b-0 hover:bg-canvas/60">
-                                <td class="pl-4"><input type="checkbox" data-row-check aria-label="Select {{ $report->reference_no }}" class="size-3.5 accent-brand"></td>
-                                <td class="px-2 font-medium text-brand"><a href="{{ $showUrl }}" class="hover:underline">{{ $report->reference_no }}</a></td>
+                                <td class="pl-4 pr-2 font-medium text-brand"><a href="{{ $showUrl }}" class="hover:underline">{{ $report->reference_no }}</a></td>
                                 <td class="px-2 py-1.5">{{ $report->title }}</td>
                                 <td class="px-2">{{ $report->locationShort() }}</td>
                                 <td class="px-2 py-1.5 leading-[1.4]">{{ $report->category?->name ?? '—' }}</td>

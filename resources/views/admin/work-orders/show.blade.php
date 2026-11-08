@@ -136,7 +136,7 @@
                 <div class="leading-[1.6]">
                     <p class="text-[10px] text-muted">Contact</p>
                     <p class="text-xs font-medium">
-                        {{ $order->technician->email ?: '—' }}@if ($order->technician->extension) · Ext. {{ $order->technician->extension }}@endif
+                        {{ $order->technician->email ?: '—' }}@if ($order->technician->phone) · {{ $order->technician->phone }}@endif
                     </p>
                 </div>
 

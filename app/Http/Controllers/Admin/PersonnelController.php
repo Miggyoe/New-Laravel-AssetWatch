@@ -114,7 +114,6 @@ class PersonnelController extends Controller
             'name'           => ['required', 'string', 'max:120'],
             'email'          => ['required', 'email', 'max:150', Rule::unique('technicians', 'email')->ignore($technician)],
             'phone'          => ['nullable', 'string', 'max:30'],
-            'extension'      => ['nullable', 'string', 'max:20'],
             'specialty'      => ['required', 'string', 'max:60'],
             'specialization' => ['nullable', 'string', 'max:150'],
         ]);

@@ -86,8 +86,8 @@ class ReportDetailController extends Controller
                 'rejection' => collect(self::REJECTION_REASONS)->mapWithKeys(fn ($r) => [$r => $r])->all(),
                 'category'  => Category::orderBy('name')->pluck('name', 'id')->all(),
                 'location'  => Location::with('building')->get()
-                    ->sortBy(fn ($l) => ($l->building?->name ?? '') . $l->name)
-                    ->mapWithKeys(fn ($l) => [$l->id => trim(($l->building?->name ?? '') . ' · ' . $l->name, ' ·')])->all(),
+                    ->sortBy(fn ($l) => ($l->building?->name ?? '') . $l->floor . $l->fullLabel())
+                    ->mapWithKeys(fn ($l) => [$l->id => trim(($l->building?->name ?? '') . ' · ' . $l->fullLabel(), ' ·')])->all(),
             ],
         ]);
     }

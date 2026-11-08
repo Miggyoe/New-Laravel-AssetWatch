@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Building;
 use App\Models\Category;
-use App\Models\Location;
 use App\Models\Report;
 use App\Models\ReportUpdate;
 use App\Models\User;
@@ -42,18 +40,9 @@ class DemoDashboardSeeder extends Seeder
         $categories = collect(['Furniture', 'Electrical Facilities', 'Computer Equipment', 'Plumbing', 'Laboratory Equipment'])
             ->map(fn ($n) => Category::firstOrCreate(['name' => $n]));
 
-        $locations = collect([
-            'Academic Bldg' => ['ACAD', ['203', '101']],
-            'Science Bldg'  => ['SCI',  ['104', 'Lab 1']],
-            'ICT Bldg'      => ['ICT',  ['Lab 2', 'Lab 1']],
-            'Admin Bldg'    => ['ADM',  ['G/F', '2/F']],
-        ])->flatMap(function ($def, $name) {
-            $building = Building::firstOrCreate(['code' => $def[0]], ['name' => $name]);
-
-            return collect($def[1])->map(fn ($room) => Location::firstOrCreate(
-                ['building_id' => $building->id, 'name' => $room]
-            ));
-        });
+        // The real MCC buildings and rooms
+        $this->call(RealCampusSeeder::class);
+        $locations = \App\Models\Location::all();
 
         $titles = [
             'Broken Classroom Chair', 'Defective Ceiling Light', 'Damaged Computer Keyboard',

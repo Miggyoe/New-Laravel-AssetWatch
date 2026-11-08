@@ -8,28 +8,26 @@ use App\Models\Building;
 use App\Models\Location;
 use App\Models\Report;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class LocationController extends Controller
 {
     private const PER_PAGE = [10, 25, 50];
 
+    /** Buildings. */
     public function index(Request $request)
     {
-        $filters = $this->filters($request);
+        $filters = ['q' => trim((string) $request->query('q', '')) ?: null, 'status' => in_array($request->query('status'), ['active', 'inactive'], true) ? $request->query('status') : null];
         $perPage = in_array((int) $request->query('per_page'), self::PER_PAGE, true) ? (int) $request->query('per_page') : self::PER_PAGE[0];
 
         $buildings = Building::query()
             ->select('buildings.*')
             ->withCount('locations')
             ->selectRaw('(select count(*) from reports where reports.deleted_at is null and reports.location_id in (select id from locations where locations.building_id = buildings.id)) as reports_count')
-            ->with('locations:id,building_id,name')
             ->when($filters['q'], function ($q, $term) {
                 $like = '%' . addcslashes($term, '%_\\') . '%';
-                $q->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('code', 'like', $like));
+                $q->where(fn ($w) => $w->where('name', 'like', $like)
+                    ->orWhereHas('locations', fn ($l) => $l->where('name', 'like', $like)->orWhere('code', 'like', $like)));
             })
             ->when($filters['status'] === 'active', fn ($q) => $q->where(fn ($w) => $w->where('is_active', true)->orWhereNull('is_active')))
             ->when($filters['status'] === 'inactive', fn ($q) => $q->where('is_active', false))
@@ -51,38 +49,22 @@ class LocationController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validated($request);
+        $data = $request->validate(['name' => ['required', 'string', 'max:120', Rule::unique('buildings', 'name')]]);
 
-        $building = DB::transaction(function () use ($data) {
-            $building = Building::create(['name' => $data['name'], 'code' => $data['code'], 'is_active' => $data['is_active']]);
-            $this->syncRooms($building, $data['rooms']);
+        $building = Building::create(['name' => $data['name'], 'is_active' => $request->boolean('is_active')]);
+        ActivityLog::record('location.created', "Added building {$building->name}", $building);
 
-            return $building;
-        });
-
-        ActivityLog::record('location.created', "Added building {$building->name} ({$building->code})", $building);
-
-        return redirect()->route('admin.locations.index')->with('status', "{$building->name} added with {$building->locations()->count()} rooms.");
+        return redirect()->route('admin.locations.show', $building)->with('status', "{$building->name} added. Add its rooms below.");
     }
 
     public function update(Request $request, Building $building)
     {
-        $data = $this->validated($request, $building);
+        $data = $request->validate(['name' => ['required', 'string', 'max:120', Rule::unique('buildings', 'name')->ignore($building)]]);
 
-        $kept = DB::transaction(function () use ($building, $data) {
-            $building->update(['name' => $data['name'], 'code' => $data['code'], 'is_active' => $data['is_active']]);
+        $building->update(['name' => $data['name'], 'is_active' => $request->boolean('is_active')]);
+        ActivityLog::record('location.updated', "Updated building {$building->name}", $building);
 
-            return $this->syncRooms($building, $data['rooms']);
-        });
-
-        ActivityLog::record('location.updated', "Updated building {$building->name} ({$building->code})", $building);
-
-        $message = "{$building->name} saved.";
-        if ($kept->isNotEmpty()) {
-            $message .= ' These rooms were kept because reports refer to them: ' . $kept->implode(', ') . '.';
-        }
-
-        return back()->with('status', $message);
+        return back()->with('status', "{$building->name} saved.");
     }
 
     /** Deactivate / reactivate. Reports and work orders keep their original location either way. */
@@ -96,66 +78,94 @@ class LocationController extends Controller
         return back()->with('status', "{$building->name} {$state}." . ($building->is_active ? '' : ' It is hidden from new report forms.'));
     }
 
-    private function validated(Request $request, ?Building $building = null): array
+    /** Rooms of one building. */
+    public function show(Request $request, Building $building)
     {
-        $request->merge(['code' => Str::upper(trim((string) $request->input('code')))]);
-
-        $data = $request->validate([
-            'name'  => ['required', 'string', 'max:120', Rule::unique('buildings', 'name')->ignore($building)],
-            'code'  => ['required', 'string', 'max:12', 'regex:/^[A-Z0-9_-]+$/', Rule::unique('buildings', 'code')->ignore($building)],
-            'rooms' => ['nullable', 'string', 'max:6000'],
-        ], ['code.regex' => 'Use letters, numbers, dashes or underscores only.']);
-
-        // Room names: one per line, unique, at most 60 characters each
-        $rooms = $this->parseRooms($data['rooms'] ?? '');
-        if ($rooms->contains(fn ($r) => mb_strlen($r) > 60)) {
-            abort(back()->withInput()->withErrors(['rooms' => 'Each room name must be 60 characters or fewer.']));
-        }
-
-        return [
-            'name'      => $data['name'],
-            'code'      => $data['code'],
-            'rooms'     => $rooms,
-            'is_active' => $request->boolean('is_active'),
+        $filters = [
+            'q'     => trim((string) $request->query('q', '')) ?: null,
+            'type'  => array_key_exists((string) $request->query('type'), Location::TYPES) ? (string) $request->query('type') : null,
+            'floor' => trim((string) $request->query('floor', '')) ?: null,
         ];
+
+        $all = $building->locations()->withCount('reports')->get();
+
+        $rooms = $all
+            ->when($filters['type'], fn ($c, $t) => $c->where('type', $t))
+            ->when($filters['floor'], fn ($c, $f) => $c->where('floor', $f))
+            ->when($filters['q'], fn ($c, $term) => $c->filter(fn ($r) => str_contains(mb_strtolower($r->code . ' ' . $r->name), mb_strtolower($term))))
+            ->sort(fn ($a, $b) => strnatcasecmp(
+                ($a->floor ?? '~') . ' ' . ($a->code ?? '~') . ' ' . $a->name,
+                ($b->floor ?? '~') . ' ' . ($b->code ?? '~') . ' ' . $b->name
+            ))
+            ->values();
+
+        $floors = $all->pluck('floor')->filter()->unique()->sort(SORT_NATURAL)->values();
+
+        return view('admin.locations.show', [
+            'building'  => $building,
+            'rooms'     => $rooms,
+            'floors'    => $floors,
+            'filters'   => $filters,
+            'hasFilters' => collect($filters)->filter()->isNotEmpty(),
+            'totals'    => ['rooms' => $all->count(), 'floors' => $floors->count(), 'reports' => (int) $all->sum('reports_count')],
+            'options'   => [
+                'type'  => ['' => 'All room types'] + collect(array_keys(Location::TYPES))->mapWithKeys(fn ($t) => [$t => $t])->all(),
+                'floor' => ['' => 'All floors'] + $floors->mapWithKeys(fn ($f) => [$f => $f])->all(),
+                'types' => collect(array_keys(Location::TYPES))->mapWithKeys(fn ($t) => [$t => $t])->all(),
+            ],
+            'openModal' => old('_modal'),
+        ]);
     }
 
-    private function parseRooms(string $text): Collection
+    public function storeRoom(Request $request, Building $building)
     {
-        return collect(preg_split('/\R/', $text))->map(fn ($l) => trim($l))->filter()->unique()->values();
+        $room = $building->locations()->create($this->roomData($request, $building));
+        ActivityLog::record('location.room_added', "Added room {$room->fullLabel()} to {$building->name}", $building);
+
+        return redirect()->route('admin.locations.show', $building)->with('status', "{$room->fullLabel()} added.");
     }
 
-    /**
-     * Adds missing rooms and removes rooms that were deleted from the list, except rooms that reports use.
-     * Returns the names that had to be kept.
-     */
-    private function syncRooms(Building $building, Collection $names): Collection
+    public function updateRoom(Request $request, Building $building, Location $location)
     {
-        $existing = $building->locations()->get();
+        abort_unless($location->building_id === $building->id, 404);
 
-        foreach ($names as $name) {
-            if (! $existing->contains('name', $name)) {
-                $building->locations()->create(['name' => $name]);
-            }
+        $location->update($this->roomData($request, $building, $location));
+        ActivityLog::record('location.room_updated', "Updated room {$location->fullLabel()} in {$building->name}", $building);
+
+        return back()->with('status', "{$location->fullLabel()} saved.");
+    }
+
+    public function destroyRoom(Building $building, Location $location)
+    {
+        abort_unless($location->building_id === $building->id, 404);
+
+        if (Report::withTrashed()->where('location_id', $location->id)->exists()) {
+            return back()->with('error', "{$location->fullLabel()} cannot be deleted because reports refer to it.");
         }
 
-        $kept = collect();
-        foreach ($existing->whereNotIn('name', $names->all()) as $room) {
-            if (Report::withTrashed()->where("location_id", $room->id)->exists()) {
-                $kept->push($room->name);
-            } else {
-                $room->delete();
-            }
-        }
+        $label = $location->fullLabel();
+        $location->delete();
+        ActivityLog::record('location.room_deleted', "Deleted room {$label} from {$building->name}", $building);
 
-        return $kept;
+        return back()->with('status', "{$label} deleted.");
     }
 
-    private function filters(Request $request): array
+    private function roomData(Request $request, Building $building, ?Location $room = null): array
     {
+        $data = $request->validate([
+            'code'  => ['nullable', 'string', 'max:40', Rule::unique('locations', 'code')->where('building_id', $building->id)->ignore($room)],
+            'name'  => ['required', 'string', 'max:120'],
+            'type'  => ['required', Rule::in(array_keys(Location::TYPES))],
+            'floor' => ['nullable', 'string', 'max:80'],
+            'notes' => ['nullable', 'string', 'max:200'],
+        ], ['code.unique' => 'Another room in this building already uses this code.']);
+
         return [
-            'q'      => trim((string) $request->query('q', '')) ?: null,
-            'status' => in_array($request->query('status'), ['active', 'inactive'], true) ? $request->query('status') : null,
+            'code'  => filled($data['code'] ?? null) ? trim($data['code']) : null,
+            'name'  => trim($data['name']),
+            'type'  => $data['type'],
+            'floor' => filled($data['floor'] ?? null) ? trim($data['floor']) : null,
+            'notes' => filled($data['notes'] ?? null) ? trim($data['notes']) : null,
         ];
     }
 }

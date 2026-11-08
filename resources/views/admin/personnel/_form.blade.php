@@ -30,10 +30,6 @@
                 <label for="{{ $id }}-phone" class="mb-[7px] block text-xs font-medium">Phone</label>
                 <input id="{{ $id }}-phone" name="phone" value="{{ $val('phone') }}" maxlength="30" class="{{ $input }} border-line">
             </div>
-            <div class="sm:w-[120px]">
-                <label for="{{ $id }}-extension" class="mb-[7px] block text-xs font-medium">Extension</label>
-                <input id="{{ $id }}-extension" name="extension" value="{{ $val('extension') }}" maxlength="20" class="{{ $input }} border-line">
-            </div>
         </div>
 
         <div class="flex flex-col gap-4 sm:flex-row">

@@ -51,7 +51,7 @@ class Report extends Model
             return '—';
         }
 
-        return trim(($this->location->building?->name ?? '') . ' · ' . $this->location->name, ' ·');
+        return trim(($this->location->building?->name ?? '') . ' · ' . $this->location->fullLabel(), ' ·');
     }
 
     /** "Academic · 203" (compact, as used in the report tables) */
@@ -61,7 +61,7 @@ class Report extends Model
             return '—';
         }
 
-        return trim(($this->location->building?->short_name ?? '') . ' · ' . $this->location->name, ' ·');
+        return trim(($this->location->building?->short_name ?? '') . ' · ' . $this->location->shortLabel(), ' ·');
     }
 
     /** Start date for a period preset (null = no date restriction). */

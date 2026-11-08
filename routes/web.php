@@ -102,4 +102,14 @@ Route::middleware(['auth', 'mcc.org', 'admin'])->prefix('admin')->name('admin.')
 
     // Avatars
     Route::get('avatars/{user}', [AvatarController::class, 'show'])->name('avatars.show');
+
+    // Locations and rooms
+    Route::get('locations',                                      [LocationController::class, 'index'])->name('locations.index');
+    Route::post('locations',                                     [LocationController::class, 'store'])->name('locations.store');
+    Route::get('locations/{building}',                           [LocationController::class, 'show'])->name('locations.show');
+    Route::patch('locations/{building}',                         [LocationController::class, 'update'])->name('locations.update');
+    Route::post('locations/{building}/toggle',                   [LocationController::class, 'toggle'])->name('locations.toggle');
+    Route::post('locations/{building}/rooms',                    [LocationController::class, 'storeRoom'])->name('locations.rooms.store');
+    Route::patch('locations/{building}/rooms/{location}',        [LocationController::class, 'updateRoom'])->name('locations.rooms.update');
+    Route::delete('locations/{building}/rooms/{location}',       [LocationController::class, 'destroyRoom'])->name('locations.rooms.destroy');
 });

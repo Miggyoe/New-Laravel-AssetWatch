@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Building extends Model
 {
@@ -17,11 +16,9 @@ class Building extends Model
 
     public function locations() { return $this->hasMany(Location::class); }
 
-    /** "Academic Bldg" -> "Academic" (used in compact location labels such as "Academic · 203"). */
+    /** Kept for the compact "Building · Room" labels; real building names are already short. */
     protected function shortName(): Attribute
     {
-        return Attribute::get(fn () => Str::of($this->name)
-            ->replaceMatches('/\s+(Bldg\.?|Building)$/i', '')
-            ->toString());
+        return Attribute::get(fn () => (string) $this->name);
     }
 }

@@ -5,7 +5,7 @@
 
 @section('content')
     @php
-        $heads = ['Building name', 'Building code', 'Rooms', 'Reported incidents', 'Status', 'Actions'];
+        $heads = ['Building name', 'Rooms', 'Reported incidents', 'Status', 'Actions'];
         $pill  = 'inline-flex h-[23px] items-center whitespace-nowrap rounded-full px-2 text-[10px] font-semibold';
         $link  = 'font-medium text-brand hover:underline';
     @endphp
@@ -30,7 +30,7 @@
         {{-- Filters --}}
         <div class="flex flex-wrap items-center gap-3 p-[18px]">
             <div class="relative w-full sm:w-[285px]">
-                <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="Search building name or code"
+                <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="Search building or room"
                        class="h-10 w-full rounded-md border border-line bg-white pl-3.5 pr-10 text-xs text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/30">
                 <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-ink" aria-label="Search"><x-icon name="search" :size="16" /></button>
             </div>
@@ -40,9 +40,9 @@
 
         {{-- Table --}}
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[820px] table-fixed text-left">
+            <table class="w-full min-w-[760px] table-fixed text-left">
                 <colgroup>
-                    <col><col class="w-[150px]"><col class="w-[110px]"><col class="w-[160px]"><col class="w-[110px]"><col class="w-[160px]">
+                    <col><col class="w-[110px]"><col class="w-[160px]"><col class="w-[110px]"><col class="w-[210px]">
                 </colgroup>
                 <thead>
                     <tr class="h-[43px] bg-canvas text-[10px] font-semibold text-muted">
@@ -57,18 +57,19 @@
                             @php $active = $building->is_active ?? true; @endphp
                             <tr class="h-[67px] border-b border-line last:border-b-0 hover:bg-canvas/60">
                                 <td class="pl-4 pr-2">
-                                    <div class="flex items-center gap-3">
+                                    <a href="{{ route('admin.locations.show', $building) }}" class="flex items-center gap-3 hover:text-brand">
                                         <span class="flex size-6 shrink-0 items-center justify-center rounded bg-[#e8f0fb] text-navy"><x-icon name="building-2" :size="14" /></span>
-                                        <span class="min-w-0 truncate text-xs font-medium">{{ $building->name }}</span>
-                                    </div>
+                                        <span class="min-w-0 text-xs font-medium leading-[1.4]">{{ $building->name }}</span>
+                                    </a>
                                 </td>
-                                <td class="px-2">{{ $building->code }}</td>
                                 <td class="px-2">{{ number_format($building->locations_count) }}</td>
                                 <td class="px-2">{{ number_format($building->reports_count) }}</td>
                                 <td class="px-2">
                                     <span class="{{ $pill }} {{ $active ? 'bg-[#eaf7ee] text-[#15803d]' : 'bg-[#f5f7fb] text-[#64748b]' }}">{{ $active ? 'Active' : 'Inactive' }}</span>
                                 </td>
                                 <td class="whitespace-nowrap px-2">
+                                    <a href="{{ route('admin.locations.show', $building) }}" class="{{ $link }}">Rooms</a>
+                                    <span class="text-brand"> · </span>
                                     <button type="button" data-modal-open="edit-location-{{ $building->id }}" class="{{ $link }}">Edit</button>
                                     <span class="text-brand"> · </span>
                                     <button type="submit" form="toggle-location-{{ $building->id }}" class="{{ $link }}">{{ $active ? 'Deactivate' : 'Reactivate' }}</button>
